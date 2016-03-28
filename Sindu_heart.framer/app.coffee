@@ -1,40 +1,89 @@
+#heart animation library with animation events 
 layer = new Layer
-	backgroundColor: "black"
-	width: Screen.width, height: Screen.height
+	width: 265,height: 218
+	scale: 0.4
+	curve:"ease-out"
+	time:1
+	backgroundColor: "transparent"
+
+layer.center()
+
+pop = () -> 
+	layer.animate
+		properties: 
+			scale: 1
+			curve:"ease-in"
+			time:0.01
+			hueRotate:Utils.randomNumber(80,250)
 	
-heartOriginal = new Layer
-	width: 170, height: 140
-	scale: 0.65
+	layer.on Events.AnimationEnd,->
+		layer.animate
+			properties: 
+				scale:0.4
+				curve:"ease-in"
+				time:0.1
+
+layersArr = []
+
+heart = new Layer
+	width: 265, height: 218
 	image: "images/heart.png"
-
-heart =
-	blue:   heartOriginal.copy()
-	pink:   heartOriginal.copy()
-	green:  heartOriginal.copy()
-	brown:  heartOriginal.copy()
-	violet: heartOriginal.copy()
-	orange: heartOriginal.copy()
-	yellow: heartOriginal.copy()
-	original: heartOriginal
-
-setColor = (heartLayer, hueRotation) ->
-	heartLayer.hueRotate  = hueRotation
-
-setColor heart.blue, 275
-setColor heart.pink, 500
-setColor heart.green, 1500
-setColor heart.brown, 500
-setColor heart.violet, 350
-setColor heart.orange, 2000
-setColor heart.yellow, 2200
-
-streamSize = 
-	w: Screen.width  * 0.20
-	h: Screen.height * 0.66
-	backgroundColor:"blue"
 	
-streamPosition = 
-	x: Screen.width  - streamSize.w
-	y: Screen.height - streamSize.h
+heart.superLayer = layer
+layer.addSubLayer(heart)
+
+
+burst = () ->
+	for i in [0..10]
+		layers = layer[i] = layer.copy()
+		layer[i].scale = Utils.randomNumber(0.2,1)
+		
+		layer[i].opacity = Utils.randomNumber(0,1)
+		layer[i].y = Utils.randomNumber(530,300)
+		layer[i].hueRotate = Utils.randomNumber(80,250)
+		
+		layer[i].animate
+			properties:
+				y: Utils.randomNumber(-100,-1000)
+				opacity: 1
+			curve: "ease-in"
 	
+		layer[i].onAnimationStop ->
+			this.destroy()
+		
+		heartAnimationProps =
+			x: Utils.randomNumber(-Screen.width,Screen.width)
+			r: Utils.randomNumber(2, 10)
+			t: 1.5
+			c: "ease-in-out"
+		
+		floatLeft = new Animation
+			layer: layer[i]
+			properties:
+				x: layer[i].x - heartAnimationProps.x
+				rotation: heartAnimationProps.r
+			time: heartAnimationProps.t
+			curve: heartAnimationProps.c
+			
+		floatRight = new Animation
+			layer: layer[i]
+			properties:
+				x: layer[i].x + heartAnimationProps.x
+				rotation: -heartAnimationProps.r
+			time: heartAnimationProps.t
+			curve: heartAnimationProps.c
+		
+		floatLeft.on(Events.AnimationEnd, floatRight.start)
+		floatRight.on(Events.AnimationEnd, floatLeft.start)
+	
+		# Start with a left or right float first
+		Utils.randomChoice( [floatLeft, floatRight] ).start()
+
+
+
+
+layer.on Events.Click,->
+	pop()
+	burst()
+
 
